@@ -89,24 +89,27 @@ interface BondContext {
 
 ```
 [접속] ─▶ ① 시가평가표(/mtm)   ← 진입 기본(default landing)
-             │  부문 선택(등급 행 / 만기 셀)
-             ▼  {category, creditRating, selectedTenor, selectedYield, yieldSource:'CURVE'}
-         ② 수익률곡선(/curve)
-             │  곡선상 지점(만기점) 선택
-             ▼  {selectedTenor, selectedYield(보간), yieldSource:'CURVE'}
-         ③ 유통정보(/distribution)   ← 해당 부문·만기의 대표/활성 종목 시계열
-             │  종목 확정
-             ▼  {bondId, bondName, valuationDate, selectedPrice}
-         ④ 발행정보(/issue)
-             │  단가계산 진입
-             ▼  {bondId, bondName, selectedYield, valuationDate}
-         ⑤ 단가계산 · 투자 시뮬레이션(/simulation)
+             │
+             ├─(A) 행(종류/등급) 선택 ─▶ ② 수익률곡선(/curve)
+             │        {category, creditRating, bondType}         │ 곡선상 지점(만기점) 선택
+             │                                                    ▼ {selectedTenor, selectedYield(보간)}
+             │                                              ③ 유통정보(/distribution)
+             │                                                    ▲
+             └─(B) 셀(등급×만기) 선택 ─▶ [종목 리스트] ──종목 확정──┘
+                      {category, creditRating, selectedTenor, selectedYield}
+                                                            │  {bondId, bondName, valuationDate, selectedPrice}
+                                                            ▼
+                                                      ④ 발행정보(/issue)
+                                                            │ 단가계산 진입
+                                                            ▼ {bondId, bondName, selectedYield, valuationDate}
+                                                      ⑤ 단가계산 · 투자 시뮬레이션(/simulation)
 ```
 
 **단계별 파라미터 연결 규칙**
 | 단계 | 사용자 액션 | 전달(Out) 파라미터 | 다음 화면이 하는 일(In) |
 |------|-------------|--------------------|--------------------------|
-| ①→② | 시가표에서 **부문(등급 행 또는 만기 셀)** 탭 | `category, creditRating, selectedTenor, selectedYield, yieldSource:'CURVE', sourceScreen:'MTM'` | 해당 등급 곡선 자동 선택 + 선택 만기 강조 |
+| ①(A)→② | 시가표에서 **행(종류/등급)** 탭 | `category, creditRating, bondType, sourceScreen:'MTM'` | 해당 등급 곡선 자동 선택 |
+| ①(B)→리스트 | 시가표에서 **특정 셀(등급×만기)** 탭 | `category, creditRating, selectedTenor, selectedYield, yieldSource:'CURVE', sourceScreen:'MTM'` | 해당 구간 **종목 리스트** 표시 → 종목 확정 시 ③으로 |
 | ②→③ | 곡선상 **만기점** 탭 | `selectedTenor, selectedYield(보간치), yieldSource:'CURVE', sourceScreen:'CURVE'` | 해당 부문·만기에 부합하는 **대표 종목**(또는 활성 종목)의 유통 시계열 표시 |
 | ③→④ | 유통 화면에서 **발행정보 보기** | `bondId, bondName, valuationDate, selectedPrice, sourceScreen:'MARKET'` | 종목 발행 상세 렌더 |
 | ④→⑤ | 발행 화면에서 **단가계산** | `bondId, bondName, selectedYield, valuationDate, yieldSource, sourceScreen:'ISSUE'` | A/B 수익률·일자 초기값을 이어받아 계산 |
@@ -155,8 +158,12 @@ interface BondContext {
 ### 4.5 시가평가표 `/mtm` — 드릴다운 ① (진입 기본 화면 ★)
 - **역할:** 도메인 접속 시 **디폴트 랜딩**. 시장 전체(등급×만기 매트릭스)를 조망하고 부문을 골라 곡선으로 좁혀가는 출발점.
 - **In (G3 해소):** `category`/`creditRating` → 매트릭스에서 **활성 종목의 행을 자동 하이라이트**, `selectedTenor` → 해당 열 강조.
-- **Out (①→②):** **부문(등급 행 또는 만기 셀)** 탭 → `{ category, creditRating, selectedYield(셀 수익률), selectedTenor, yieldSource:'CURVE', sourceScreen:'MTM' }` → **`/curve`** (표준 드릴다운, 기존 `btn-to-curve`). "시뮬레이션으로"(`btn-to-sim`)는 빠른 우회로로 유지.
-- **content:** sticky 헤더/첫열 유지(기존 E2E), 활성 종목 등급 행에 배지.
+- **Out — 두 갈래 (★):**
+  - **(A) 행(종류/등급) 선택 → 수익률곡선.** 행 라벨(부문·등급)을 탭하면 `{ category, creditRating, bondType(=rowKey/curveId), sourceScreen:'MTM' }` → **`/curve`**. 해당 등급 곡선을 조망(드릴다운 ①→②).
+  - **(B) 특정 셀(등급×만기) 선택 → 종목 리스트.** 셀을 탭하면 `{ category, creditRating, selectedTenor, selectedYield(셀 수익률), yieldSource:'CURVE', sourceScreen:'MTM' }` → **해당 구간(등급×만기)에 속할 수 있는 종목 리스트**를 보여준다. 리스트에서 종목 확정 → 드릴다운 ③(유통정보)로 진입.
+  - **(보조)** "시뮬레이션으로"(`btn-to-sim`) 빠른 우회로 유지.
+- **종목 리스트(세그먼트 뷰):** 셀이 지정한 `category`/`creditRating`(행) + `selectedTenor`(열, 잔존만기 근접) 조건으로 종목을 필터링해 나열. 구현은 **검색 화면(`/search`) 을 세그먼트 필터로 재사용**(`?cat=&rating=&tenor=`)하거나 전용 뷰로 확장. 각 항목 탭 → `{ bondId, bondName, isin, category, creditRating }` 시드 후 `/distribution/:bondId`(권장) 또는 `/issue/:bondId`.
+- **content:** sticky 헤더/첫열 유지(기존 E2E), 활성 종목 등급 행에 배지. **행 라벨과 데이터 셀의 탭 타깃(hit area)을 시각적으로 구분**해 (A)/(B) 를 오인하지 않게 한다.
 
 ### 4.6 단가계산 · 투자 시뮬레이션 `/simulation` — 드릴다운 ⑤ (종착)
 - **In:** `bondId`, `selectedYield`(→ A/B 수익률 초기값), `valuationDate`(→ A일자), `yieldSource`(출처 배지)
@@ -167,8 +174,10 @@ interface BondContext {
 **정규 드릴다운 (순방향 1급 경로)**
 | # | From → To | 전달 파라미터 |
 |---|-----------|---------------|
-| ① | 시가표 → 곡선 | category, creditRating, selectedTenor, selectedYield, yieldSource:CURVE |
+| ①A | 시가표(행) → 곡선 | category, creditRating, bondType |
+| ①B | 시가표(셀) → 종목 리스트 | category, creditRating, selectedTenor, selectedYield, yieldSource:CURVE |
 | ② | 곡선 → 유통 | selectedTenor, selectedYield(보간 가능), yieldSource:CURVE |
+| ①B' | 종목 리스트 → 유통/발행 | bondId, bondName, isin, category, creditRating |
 | ③ | 유통 → 발행 | bondId, bondName, valuationDate, selectedPrice |
 | ④ | 발행 → 단가계산 | bondId, bondName, selectedYield, yieldSource, valuationDate |
 
@@ -251,7 +260,9 @@ interface AppState {
 기존 `e2e/connections.spec.ts`(콘텐츠 연결)·`e2e/mtm-sticky.spec.ts` 를 확장한다.
 
 - **AC0 (기본 랜딩):** 도메인 루트(`/`)·미매칭 경로 접속 시 **시가평가표(`/mtm`)** 가 표시된다.
-- **AC-FUNNEL (정규 드릴다운):** 시가표 부문 탭 → 곡선 → 만기점 탭 → 유통 → "발행정보 보기" → 발행 → "단가계산" → 시뮬레이션까지 **한 흐름으로 이어지며**, 각 단계에서 앞 단계 파라미터(등급/만기/수익률/평가일/종목)가 유지·반영된다.
+- **AC-FUNNEL (정규 드릴다운):** 시가표 → 곡선 → 만기점 탭 → 유통 → "발행정보 보기" → 발행 → "단가계산" → 시뮬레이션까지 **한 흐름으로 이어지며**, 각 단계에서 앞 단계 파라미터(등급/만기/수익률/평가일/종목)가 유지·반영된다.
+- **AC-MTM-A (행→곡선):** 시가표에서 **행(종류/등급)** 을 탭하면 해당 등급 **수익률곡선**으로 이동한다.
+- **AC-MTM-B (셀→종목리스트):** 시가표에서 **특정 셀(등급×만기)** 을 탭하면 그 구간에 속하는 **종목 리스트**가 표시되고, 항목 선택 시 해당 종목 컨텍스트를 시드하며 유통/발행으로 진입한다.
 - **AC-INTERP (곡선 보간):** 특정 연물 관측이 결측이어도 곡선이 **보간치로 연속 표현**되고, 보간점은 `○` 로 구분되며 선택 시 `yieldSource:'CURVE'` + 보간 배지로 다음 단계에 전달된다. 양쪽 모두 결측인 구간은 `—` 로 표기·선택 불가.
 - **AC1 (관성):** 발행에서 종목 X 조회 → 하단탭 "곡선"/"시가표"/"시뮬" 이동 시 **X 의 종목명·수익률이 유지**된다.
 - **AC2 (검색 시드):** 검색 → 결과 탭 즉시 컨텍스트 바에 `bondName` 표시.
