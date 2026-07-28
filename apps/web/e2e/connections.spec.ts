@@ -52,4 +52,23 @@ test.describe('콘텐츠 연결 (BondContext 전달)', () => {
       await expect(page.getByTestId(testid)).toBeVisible();
     }
   });
+
+  test('기본 랜딩은 시가평가표', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByTestId('mtm-screen')).toBeVisible();
+  });
+
+  test('시가표 행(종류) → 수익률곡선', async ({ page }) => {
+    await page.goto('/mtm');
+    await expect(page.getByTestId('mtm-screen')).toBeVisible();
+    await page.getByTestId('mtm-row-head').first().click();
+    await expect(page.getByTestId('curve-screen')).toBeVisible();
+  });
+
+  test('시가표 셀 → 구간 종목 리스트', async ({ page }) => {
+    await page.goto('/mtm');
+    await page.locator('[data-testid="mtm-grid"] tbody tr:first-child td:first-of-type').click();
+    await page.getByTestId('btn-segment-list').click();
+    await expect(page.getByTestId('search-results')).toBeVisible();
+  });
 });

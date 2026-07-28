@@ -1,4 +1,5 @@
 import type {
+  BondCategory,
   BondCreditRating,
   BondMarketObservation,
   BondMaster,
@@ -278,6 +279,34 @@ export const MTM_ROWS: { key: string; label: string; base: number; slope: number
   { key: 'CORP_Am', label: '회사채 A-', base: 4.8, slope: 1.2, curveId: 'CORPORATE_A0' },
   { key: 'CORP_BBB', label: '회사채 BBB', base: 6.5, slope: 1.4, curveId: 'CORPORATE_BBB' },
 ];
+
+/** 시가평가표 행(종류/등급) → 종목 세그먼트(카테고리·등급) 매핑.
+ *  셀 선택 시 "해당 구간에 속할 수 있는 종목 리스트" 필터에 사용한다. */
+export const MTM_ROW_SEGMENT: Record<string, { category: BondCategory; rating?: string }> = {
+  GOV: { category: 'GOVERNMENT' },
+  MSB: { category: 'MONETARY' },
+  LOCAL: { category: 'LOCAL' },
+  SPECIAL: { category: 'SPECIAL', rating: 'AAA' },
+  BANK: { category: 'BANK', rating: 'AAA' },
+  FIN: { category: 'FINANCIAL', rating: 'AA' },
+  CARD: { category: 'CARD', rating: 'AA' },
+  CAPITAL: { category: 'CAPITAL', rating: 'AA' },
+  CORP_AAA: { category: 'CORPORATE', rating: 'AAA' },
+  CORP_AAp: { category: 'CORPORATE', rating: 'AA+' },
+  CORP_AA0: { category: 'CORPORATE', rating: 'AA0' },
+  CORP_AAm: { category: 'CORPORATE', rating: 'AA-' },
+  CORP_Ap: { category: 'CORPORATE', rating: 'A+' },
+  CORP_A0: { category: 'CORPORATE', rating: 'A0' },
+  CORP_Am: { category: 'CORPORATE', rating: 'A-' },
+  CORP_BBB: { category: 'CORPORATE', rating: 'BBB' },
+};
+
+/** 종목의 기준일 대비 잔존연수 (세그먼트 만기 근접 정렬용) */
+export function residualYears(bondId: string, asOf = AS_OF): number | null {
+  const t = TERMS[bondId];
+  if (!t) return null;
+  return (Date.parse(t.maturityDate) - Date.parse(asOf)) / (365 * 86_400_000);
+}
 
 export const MTM_TENORS: TenorLabel[] = ['3M', '6M', '1Y', '3Y', '5Y', '10Y', '30Y'];
 const YEARS: Record<TenorLabel, number> = {

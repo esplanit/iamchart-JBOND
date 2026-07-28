@@ -15,9 +15,11 @@ export function MtmScreen() {
 
   const [rates, setRates] = useState<MtmRate[] | null>(null);
   const [showBp, setShowBp] = useState(false);
-  const [selected, setSelected] = useState<{ row: (typeof MTM_ROWS)[number]; rate?: MtmRate } | null>(
-    null,
-  );
+  const [selected, setSelected] = useState<{
+    row: (typeof MTM_ROWS)[number];
+    rate?: MtmRate;
+    tenor: TenorLabel;
+  } | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -37,6 +39,21 @@ export function MtmScreen() {
   if (rates == null) {
     return <Skeleton className="h-[420px] w-full" />;
   }
+
+  // 행(종류/등급) 선택 → 해당 등급 수익률곡선
+  const goRowCurve = (row: (typeof MTM_ROWS)[number]) => {
+    pushContext({ sourceScreen: 'MTM', bondType: row.curveId });
+    navigate('/curve');
+  };
+
+  // 셀(등급×만기) 선택 → 해당 구간에 속할 수 있는 종목 리스트(검색 세그먼트 필터)
+  const goSegmentList = () => {
+    if (!selected) return;
+    if (selected.rate?.yield != null) {
+      pushContext({ sourceScreen: 'MTM', selectedYield: selected.rate.yield, yieldSource: 'CURVE' });
+    }
+    navigate(`/search?seg=${selected.row.key}&tenor=${selected.tenor}`);
+  };
 
   const goCurve = () => {
     if (!selected) return;
@@ -95,7 +112,12 @@ export function MtmScreen() {
           <tbody>
             {MTM_ROWS.map((row) => (
               <tr key={row.key}>
-                <th className="mtm-row-head min-w-[92px] bg-white px-2 py-2 text-left text-[11px] font-medium text-gray-700 ring-1 ring-gray-100">
+                <th
+                  onClick={() => goRowCurve(row)}
+                  data-testid="mtm-row-head"
+                  title="이 종류의 수익률곡선 보기"
+                  className="mtm-row-head min-w-[92px] cursor-pointer bg-white px-2 py-2 text-left text-[11px] font-medium text-gray-700 ring-1 ring-gray-100 hover:text-bondgold"
+                >
                   {row.label}
                 </th>
                 {MTM_TENORS.map((t) => {
@@ -104,7 +126,7 @@ export function MtmScreen() {
                   return (
                     <td
                       key={t}
-                      onClick={() => setSelected({ row, rate })}
+                      onClick={() => setSelected({ row, rate, tenor: t })}
                       className={`cursor-pointer px-2 py-1.5 text-right ring-1 ring-gray-100 ${
                         highlightTenor === t ? 'bg-amber-50' : ''
                       }`}
@@ -155,7 +177,23 @@ export function MtmScreen() {
             <KV label="시가평가수익률" value={formatYield(selected.rate.yield)} />
             <KV label="전일대비" value={formatBp(selected.rate.changeBp)} />
             <KV label="기준일" value={selected.rate.valuationDate} />
-            <div className="mt-3 grid grid-cols-2 gap-2">
+          </>
+        ) : (
+          <p className="py-4 text-center text-sm text-gray-400">해당 셀은 데이터가 없습니다(결측).</p>
+        )}
+
+        <div className="mt-3 flex flex-col gap-2">
+          {/* 셀 선택 → 이 구간(등급×만기)에 속할 수 있는 종목 리스트 */}
+          <button
+            type="button"
+            onClick={goSegmentList}
+            data-testid="btn-segment-list"
+            className="min-h-[48px] rounded-xl bg-[#0b1020] text-sm font-medium text-white"
+          >
+            이 구간 종목 보기{selected ? ` · ${selected.tenor}` : ''}
+          </button>
+          {selected?.rate && selected.rate.yield != null && (
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={goCurve}
@@ -168,15 +206,13 @@ export function MtmScreen() {
                 type="button"
                 onClick={goSim}
                 data-testid="btn-to-sim"
-                className="min-h-[48px] rounded-xl bg-[#0b1020] text-sm font-medium text-white"
+                className="min-h-[48px] rounded-xl bg-white text-sm font-medium text-gray-800 ring-1 ring-gray-200"
               >
                 시뮬레이션 전달
               </button>
             </div>
-          </>
-        ) : (
-          <p className="py-6 text-center text-sm text-gray-400">해당 셀은 데이터가 없습니다(결측).</p>
-        )}
+          )}
+        </div>
       </BottomSheet>
     </div>
   );
