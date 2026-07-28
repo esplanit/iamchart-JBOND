@@ -31,7 +31,7 @@ export function App() {
       <main className="flex-1 px-3 pb-[84px] pt-3">
         <ErrorBoundary name={location.pathname}>
           <Routes>
-            <Route path="/" element={<Navigate to="/issue" replace />} />
+            <Route path="/" element={<Navigate to="/mtm" replace />} />
             <Route path="/search" element={<SearchScreen />} />
             <Route path="/issue" element={<IssueScreen />} />
             <Route path="/issue/:bondId" element={<IssueScreen />} />
@@ -40,7 +40,7 @@ export function App() {
             <Route path="/curve" element={<CurveScreen />} />
             <Route path="/mtm" element={<MtmScreen />} />
             <Route path="/simulation" element={<SimulationScreen />} />
-            <Route path="*" element={<Navigate to="/issue" replace />} />
+            <Route path="*" element={<Navigate to="/mtm" replace />} />
           </Routes>
         </ErrorBoundary>
       </main>
