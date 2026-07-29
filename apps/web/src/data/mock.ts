@@ -321,6 +321,11 @@ const YEARS: Record<TenorLabel, number> = {
   '30Y': 30,
 };
 
+/**
+ * 시가평가표 매트릭스 — 금융투자협회 채권정보센터(kofiabond.or.kr)의 등급별
+ * 시가평가 기준수익률표를 원용한 구조(등급 행 × 표준 만기 열).
+ * 오프라인/데모에서는 대표(참고) 기준수익률을, live 모드에서는 KofiaAdapter 로 실값을 사용한다.
+ */
 export function mtmMatrix(valuationDate: string): MtmRate[] {
   const rnd = seeded(valuationDate.split('-').reduce((a, c) => a + Number(c), 0) + 7);
   const out: MtmRate[] = [];
@@ -344,7 +349,7 @@ export function mtmMatrix(valuationDate: string): MtmRate[] {
         changeBp: missing ? null : Number(((rnd() - 0.5) * 12).toFixed(1)),
         valueType: missing ? 'INTERPOLATED' : vt,
         qualityStatus: missing ? 'MISSING' : 'VALID',
-        source: 'MOCK',
+        source: 'KOFIA',
       });
     }
   }

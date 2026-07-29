@@ -31,10 +31,26 @@ function addYears(iso: string, years: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+function resolveBondId(contextBondId?: string, bondType?: string): string {
+  if (contextBondId) return contextBondId;
+  if (!bondType) return MASTERS[0].bondId;
+
+  const normalized = bondType.toUpperCase();
+  const directMatch = MASTERS.find((m) => m.category?.toUpperCase() === normalized || m.bondType?.toUpperCase() === normalized);
+  if (directMatch) return directMatch.bondId;
+
+  const containsMatch = MASTERS.find((m) => {
+    const category = m.category?.toUpperCase() ?? '';
+    return category.includes(normalized) || normalized.includes(category);
+  });
+  if (containsMatch) return containsMatch.bondId;
+
+  return MASTERS[0].bondId;
+}
+
 export function SimulationScreen() {
   const { context } = useAppStore();
-  const initialBondId = context.bondId ?? MASTERS[0].bondId;
-  const [bondId, setBondId] = useState(initialBondId);
+  const [bondId, setBondId] = useState(() => resolveBondId(context.bondId, context.bondType));
   const terms = dataService.getTerms(bondId) as BondTerms;
 
   // A/B 입력
@@ -71,6 +87,25 @@ export function SimulationScreen() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bondId]);
+
+  useEffect(() => {
+    if (context.selectedYield != null) {
+      setAYield(context.selectedYield);
+      setBYield(context.selectedYield);
+    }
+    if (context.valuationDate) {
+      setADate(context.valuationDate);
+      setBDate(addYears(context.valuationDate, 1));
+    }
+    if (context.bondType || context.bondId) {
+      const resolved = resolveBondId(context.bondId, context.bondType);
+      if (resolved !== bondId) {
+        setBondId(resolved);
+      }
+    }
+    // bondId 는 의존성에서 제외: 사용자가 종목을 직접 바꿀 때 컨텍스트 값으로 되돌리지 않는다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [context.bondId, context.bondType, context.selectedYield, context.valuationDate]);
 
   const input: SimInput = useMemo(
     () => ({
@@ -145,8 +180,27 @@ export function SimulationScreen() {
     ],
   };
 
+  const selectedContextSummary = [
+    context.bondType ? `종류 ${context.bondType}` : null,
+    context.selectedTenor ? `만기 ${context.selectedTenor}` : null,
+    context.selectedYield != null ? `수익률 ${formatYield(context.selectedYield)}` : null,
+  ].filter(Boolean);
+
   return (
     <div className="flex flex-col gap-3" data-testid="simulation-screen">
+      {selectedContextSummary.length > 0 && (
+        <div className="rounded-xl bg-amber-50 p-3 shadow-sm ring-1 ring-amber-100">
+          <p className="text-[11px] font-semibold text-amber-700">선택 파라미터 적용</p>
+          <div className="mt-1 flex flex-wrap gap-2 text-[11px] text-amber-800">
+            {selectedContextSummary.map((item) => (
+              <span key={item} className="rounded-full bg-white/70 px-2 py-1">
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 종목 */}
       <div className="rounded-xl bg-white p-3 shadow-sm ring-1 ring-gray-100">
         <label className="text-[11px] text-gray-500">종목</label>

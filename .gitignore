@@ -10,3 +10,4 @@ playwright-report/
 test-results/
 .vite/
 dev-dist/
+.claude/settings.local.json

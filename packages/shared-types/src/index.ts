@@ -175,6 +175,7 @@ export interface BondContext {
   valuationDate?: string;
   selectedYield?: number;
   selectedPrice?: number;
+  selectedTenor?: TenorLabel;
   yieldSource?: 'MARKET' | 'ISSUE' | 'CURVE' | 'USER';
   sourceScreen?: 'ISSUE' | 'CURVE' | 'MARKET' | 'SIMULATION' | 'MTM';
 }

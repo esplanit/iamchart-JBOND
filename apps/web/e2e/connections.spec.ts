@@ -23,19 +23,11 @@ test.describe('콘텐츠 연결 (BondContext 전달)', () => {
     await expect(page.getByTestId('simulation-screen')).toBeVisible();
   });
 
-  test('시가평가표 → 수익률곡선', async ({ page }) => {
+  test('시가평가표 셀 → 투자 시뮬레이션 (직접 이동)', async ({ page }) => {
     await page.goto('/mtm');
     await expect(page.getByTestId('mtm-screen')).toBeVisible();
-    // 첫 데이터 셀 클릭 (국고채 3M)
+    // 첫 데이터 셀 클릭 (국고채 3M) → 곧바로 시뮬레이션
     await page.locator('[data-testid="mtm-grid"] tbody tr:first-child td:first-of-type').click();
-    await page.getByTestId('btn-to-curve').click();
-    await expect(page.getByTestId('curve-screen')).toBeVisible();
-  });
-
-  test('시가평가표 셀 → 시뮬레이션', async ({ page }) => {
-    await page.goto('/mtm');
-    await page.locator('[data-testid="mtm-grid"] tbody tr:first-child td:first-of-type').click();
-    await page.getByTestId('btn-to-sim').click();
     await expect(page.getByTestId('simulation-screen')).toBeVisible();
   });
 
@@ -65,10 +57,9 @@ test.describe('콘텐츠 연결 (BondContext 전달)', () => {
     await expect(page.getByTestId('curve-screen')).toBeVisible();
   });
 
-  test('시가표 셀 → 구간 종목 리스트', async ({ page }) => {
+  test('시가표 기준일이 표 상단에 표시', async ({ page }) => {
     await page.goto('/mtm');
-    await page.locator('[data-testid="mtm-grid"] tbody tr:first-child td:first-of-type').click();
-    await page.getByTestId('btn-segment-list').click();
-    await expect(page.getByTestId('search-results')).toBeVisible();
+    await expect(page.getByTestId('mtm-asof')).toBeVisible();
+    await expect(page.getByTestId('mtm-asof')).toContainText('기준일');
   });
 });
