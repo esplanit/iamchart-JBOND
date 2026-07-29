@@ -161,9 +161,9 @@ export function CurveScreen() {
       )}
 
       <div className="rounded-xl bg-white p-2 shadow-sm ring-1 ring-gray-100">
-        <div className="overflow-x-auto">
+        <div className="w-full">
           {current == null ? (
-            <Skeleton className="h-[300px] w-full" />
+            <Skeleton className="h-[280px] w-full" />
           ) : (
             <YieldCurveChart series={series} yName={yName} onPickTenor={pickTenor} />
           )}

@@ -38,7 +38,8 @@ export function YieldCurveChart({
       name: '잔존만기',
       nameLocation: 'end',
       nameTextStyle: { fontSize: 9 },
-      axisLabel: { fontSize: 10 },
+      axisLabel: { fontSize: 10, interval: 0, hideOverlap: true },
+      boundaryGap: false,
     },
     yAxis: {
       type: 'value',
@@ -65,7 +66,7 @@ export function YieldCurveChart({
   return (
     <ReactECharts
       option={option}
-      style={{ height: 300, minWidth: 520, width: '100%' }}
+      style={{ height: 280, width: '100%' }}
       onEvents={{
         click: (e: { name?: string }) => {
           if (onPickTenor && e.name) onPickTenor(e.name);

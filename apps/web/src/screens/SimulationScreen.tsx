@@ -249,8 +249,11 @@ export function SimulationScreen() {
       {/* 민감도 */}
       <Accordion title="민감도 분석 (−100bp ~ +100bp)" defaultOpen>
         <ReactECharts option={sensChart} style={{ height: 220, width: '100%' }} />
-        <div className="mt-2 overflow-x-auto">
-          <table className="w-full text-[11px] tabular-nums" data-testid="sensitivity-table">
+        <div className="mt-2">
+          <table
+            className="w-full table-fixed text-[10px] tabular-nums [&_td]:px-0.5 [&_th]:px-0.5"
+            data-testid="sensitivity-table"
+          >
             <thead>
               <tr className="text-gray-400">
                 <th className="py-1 text-left font-normal">시나리오</th>
@@ -282,8 +285,8 @@ export function SimulationScreen() {
 
       {/* 현금흐름 할인 상세 */}
       <Accordion title="현금흐름 · 할인과정 (A/B)">
-        <div className="overflow-x-auto">
-          <table className="w-full text-[11px] tabular-nums">
+        <div className="w-full">
+          <table className="w-full table-fixed text-[10px] tabular-nums [&_td]:px-0.5 [&_th]:px-0.5">
             <thead>
               <tr className="text-gray-400">
                 <th className="py-1 text-left font-normal">지급일</th>

@@ -88,19 +88,25 @@ export function MtmScreen() {
 
       {/* Sticky 매트릭스 */}
       <div
-        className="relative max-h-[70vh] overflow-auto rounded-xl bg-white shadow-sm ring-1 ring-gray-100"
+        className="relative overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-100"
         data-testid="mtm-grid"
       >
-        <table className="border-collapse text-[12px] tabular-nums">
+        <table className="w-full table-fixed border-collapse text-[10px] tabular-nums">
+          <colgroup>
+            <col className="w-[4.75rem]" />
+            {MTM_TENORS.map((t) => (
+              <col key={t} />
+            ))}
+          </colgroup>
           <thead>
             <tr>
-              <th className="mtm-corner bg-gray-50 px-2 py-2 text-left text-[11px] font-medium text-gray-500 ring-1 ring-gray-100">
-                종류 \ 만기
+              <th className="mtm-corner bg-gray-50 px-1 py-2 text-left text-[10px] font-medium text-gray-500 ring-1 ring-gray-100">
+                종류\만기
               </th>
               {MTM_TENORS.map((t) => (
                 <th
                   key={t}
-                  className={`mtm-col-head min-w-[64px] bg-gray-50 px-2 py-2 text-right text-[11px] font-medium ring-1 ring-gray-100 ${
+                  className={`mtm-col-head bg-gray-50 px-1 py-2 text-right text-[10px] font-medium ring-1 ring-gray-100 ${
                     highlightTenor === t ? 'text-bondgold' : 'text-gray-600'
                   }`}
                 >
@@ -116,7 +122,7 @@ export function MtmScreen() {
                   onClick={() => goRowCurve(row)}
                   data-testid="mtm-row-head"
                   title="이 종류의 수익률곡선 보기"
-                  className="mtm-row-head min-w-[92px] cursor-pointer bg-white px-2 py-2 text-left text-[11px] font-medium text-gray-700 ring-1 ring-gray-100 hover:text-bondgold"
+                  className="mtm-row-head cursor-pointer truncate bg-white px-1 py-2 text-left text-[10px] font-medium text-gray-700 ring-1 ring-gray-100 hover:text-bondgold"
                 >
                   {row.label}
                 </th>
@@ -127,7 +133,7 @@ export function MtmScreen() {
                     <td
                       key={t}
                       onClick={() => setSelected({ row, rate, tenor: t })}
-                      className={`cursor-pointer px-2 py-1.5 text-right ring-1 ring-gray-100 ${
+                      className={`cursor-pointer px-1 py-1.5 text-right ring-1 ring-gray-100 ${
                         highlightTenor === t ? 'bg-amber-50' : ''
                       }`}
                     >
