@@ -4,7 +4,7 @@
   publish = "apps/web/dist"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "22.23.4"
   VITE_BASE = "/"
 
 # SPA(react-router BrowserRouter) — 모든 경로를 index.html 로

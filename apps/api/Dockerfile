@@ -1,6 +1,6 @@
 # James Bond API (Fastify + tsx). 모노레포 루트 컨텍스트에서 빌드한다.
 #   docker build -f apps/api/Dockerfile -t jbond-api .
-FROM node:20-alpine
+FROM node:22.23.4-alpine
 
 WORKDIR /app
 
